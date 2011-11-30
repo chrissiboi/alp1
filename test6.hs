@@ -3,6 +3,7 @@
 
 --33a: rekursiv
 
+filt:: (a -> Bool) -> [a] -> [a]
 filt _ [] = []
 filt p (x:xs) 
 		| p x = x: filt p xs
@@ -10,13 +11,15 @@ filt p (x:xs)
 
 --33b: Listendurchlauf 
 
+filt_2:: (a -> Bool) -> [a] -> [a]
 filt_2 p list = [x| x <- list, p x]
 
 --33c: Schreiben sie mit Hilfe von filter eine FUnktion, die alle Leerzeichen aus einer Zeichenkette entfernt
-
+filter_3:: [[Char]] -> [[Char]]
 filter_3 [] = []
 filter_3 (x:xs) = filter (' '/=) x:xs
 
+{--
 --Aufgabe 34: Die Funktion foldr und fold sind folgendermaßen definiert:
 --foldr:: (a -> b -> b) -> b -> [a] -> b
 --foldl:: (b -> a -> b) -> b -> [a] -> b
@@ -24,11 +27,7 @@ filter_3 (x:xs) = filter (' '/=) x:xs
 --foldr f z (x:xs) = f x (foldr f z xs)
 --foldl f a [] = a
 --foldl f a (x:xs) = fodl f (f a x ) xs
---
---Vollziehen sie nach, wie die Ausdrücke foldr g 0 [1,2,3] und foldl g 0 [1,2,3] mit der Funktion g x y = x+2*y Schritt 
---für Schritt ausgewertet werden, und zwar bei (a) strenger Auswertung von innen nach außen und (b) träger Auswertung 
---(bedarfsauswertung) wie in Haskell
-{--
+
 !!!lazy:
 
 foldr x+2*y 0 [1,2,3] = x+2*y 1 (foldr (x+2*y) 0 [2,3])
@@ -95,7 +94,7 @@ init' [_] = []
 init' (x:xs) = x : init' xs 
 
 {--
-träge??
+träge? bin mir nicht sicher, ob das die träge oder strikte ist. 
 
 foldl' (x+2*y) 0 [1,2,3] = (x+2*y) (foldl' (x+2*y) 0 (init' [1,2,3])) (last' [1,2,3])
 					= (x+2*y) (foldl' (x+2*y) 0 ([1,2])        ) (3)
@@ -111,47 +110,54 @@ foldl' (x+2*y) 0 [1,2,3] = (x+2*y) (foldl' (x+2*y) 0 (init' [1,2,3])) (last' [1,
 					= (6+2*3)
 					= (12)               
 
-
+träge/strikte fehlt noch
 
 --}
-testi = foldl' (\x y -> x+2*y) 0 [1,2,3]
 		
 --Aufgabe 37
-doppel n a = a+a 					--Streng im Parameter a
-f1 n a = if n == 0 then a + 1 else a-n  --Streng im Parameter n
-f2 n a = if n == 0 then a + 1 else n	--Streng im Parameter n
+doppel n a = a+a 					--Streng im Parameter a (n wird nicht ausgewertet)
+f1 n a = if n == 0 then a + 1 else a-n  --Streng im Parameter n und a
+f2 n a = if n == 0 then a + 1 else n	--Streng im Parameter n ( a bei x /= 0 nicht ausgewertet)
 
 --Aufgabe 38
 
+mult:: (Num a) => a -> a -> a
 mult 0 _ = 0
 mult x y = x*y
 
 --Aufgabe 39
 
-bild = "\\     +-->\n \\    |\n  +---+\n"
+bild = "\\     +-->\n \\    |\n  +---+\n" --Bild was vertikal und horizontal gespiegelt werden soll
 
-flipH [] = []
-flipH (x:xs) = foldr (:) (takeWhile (/='\n') (x:xs) ++ "\n") (flipH(restH(x:xs)))
-restH (x:xs) = drop (length(takeWhile (/='\n') (x:xs) ++ "\n")) (x:xs)
-
-ausgabe img =  putStr (flipV img)
-			where 
-				 flipV [] = []
-				 flipV (x:xs) = test(ersteV (x:xs)) ++ flipV (restH(x:xs))
+flipV, restV, ersteH:: [Char] -> [Char]
+flipV_ausgabe, flipH_ausgabe:: [Char] -> IO()
+max_2:: [Char] -> Int
+--flipV und restV sorgen für die vertikale Spiegelung des Bildes, außerdem greifen Funktionen von der horizontalen
+--Spiegelung auf rest V zu/ flipV_ausgabe dient zur ausgabe des gespiegelten Bildes
+flipV_ausgabe img = putStr (flipV img)
+flipV [] = []
+flipV (x:xs) = foldr (:) (takeWhile (/='\n') (x:xs) ++ "\n") (flipV(restV(x:xs)))    --teilt bild in listen auf
+restV (x:xs) = drop (length(takeWhile (/='\n') (x:xs) ++ "\n")) (x:xs)			
+--Diese Fkt wird im Prelude aufgerufen und an sie wird das zu spiegelnde Bild übergeben 
+flipH_ausgabe img =  putStr (flipH img)										
+			where 																
+				 flipH, test:: [Char] -> [Char]
+				 flipH [] = []
+				 flipH (x:xs) = test(ersteH (x:xs)) ++ flipH (restV(x:xs))
 				 test (y:ys) 
 						| max_2 img == length(y:ys) = (y:ys)
 						| otherwise = test(' ':y:ys)
 
-ersteV (x:xs) = reverse(takeWhile (/= '\n') (x:xs)) ++ "\n"
-max_2 (x:xs) = maximum (max_ (x:xs) )
+ersteH (x:xs) = reverse(takeWhile (/= '\n') (x:xs)) ++ "\n"
+max_2 (x:xs) = maximum (max_ (x:xs) )										
 			where 
+				max_:: [Char] -> [Int]
 				max_ [] = []
-				max_ (x:xs) =  [(length(ersteV (x:xs)))] ++ (max_ (restH(x:xs)))
+				max_ (x:xs) =  [(length(ersteH (x:xs)))] ++ (max_ (restV(x:xs)))
 
 --Aufgabe 40
 
-
-
+fib1:: (Ord a, Num a, Num a1) => [a] -> [a1]
 fib1 list = [fib n| n <- list]
 		  where
 			  fib 0 = 0
